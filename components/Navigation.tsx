@@ -1,47 +1,49 @@
+import Link from 'next/link';
+
 export default function Navigation() {
   return (
     <nav className="bg-white dark:bg-zinc-900 shadow-md">
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-        <a href="/" className="text-xl font-semibold text-black dark:text-zinc-50">
+        <Link href="/" className="text-xl font-semibold text-black dark:text-zinc-50">
           Apple & Cheese
-        </a>
+        </Link>
         <div className="flex gap-6">
-          <a
+          <Link
             href="/"
             className="text-black dark:text-zinc-50 hover:text-zinc-600 dark:hover:text-zinc-400 transition"
           >
             Home
-          </a>
-          <a
+          </Link>
+          <Link
             href="/products"
             className="text-black dark:text-zinc-50 hover:text-zinc-600 dark:hover:text-zinc-400 transition"
           >
             Products
-          </a>
-          <a
+          </Link>
+          <Link
             href="/about"
             className="text-black dark:text-zinc-50 hover:text-zinc-600 dark:hover:text-zinc-400 transition"
           >
             About
-          </a>
-          <a
+          </Link>
+          <Link
             href="/contact"
             className="text-black dark:text-zinc-50 hover:text-zinc-600 dark:hover:text-zinc-400 transition"
           >
             Contact
-          </a>
-          <a
+          </Link>
+          <Link
             href="/cart"
             className="text-black dark:text-zinc-50 hover:text-zinc-600 dark:hover:text-zinc-400 transition"
           >
             Cart
-          </a>
-          <a
+          </Link>
+          <Link
             href="/login"
             className="text-black dark:text-zinc-50 hover:text-zinc-600 dark:hover:text-zinc-400 transition"
           >
             Login
-          </a>
+          </Link>
         </div>
       </div>
     </nav>

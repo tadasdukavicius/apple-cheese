@@ -1,10 +1,16 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Product } from "../../types/product"
+import { fetchAPI } from "../../lib/api";
+
 export default function ProductsPage() {
-  const products = [
-    { id: "1", name: "Premium Apple Selection", price: "$29.99", description: "High quality organic apples" },
-    { id: "2", name: "Artisan Cheese Collection", price: "$39.99", description: "Premium cheese collection" },
-    { id: "3", name: "Apple & Cheese Gift Box", price: "$49.99", description: "Exclusive combination gift box" },
-    { id: "4", name: "Limited Edition Bundle", price: "$59.99", description: "Limited edition seasonal bundle" },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchAPI<Product[]>("/api/products")
+      .then(setProducts)
+      .catch(console.error);
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
