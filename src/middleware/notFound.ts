@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
+import { Response } from "express";
 
-export const notFound = (req: Request, res: Response, next: NextFunction) => {
+export const notFound = ( res: Response ) => {
   res.status(404).json({ message: "Route not found"});
 };
