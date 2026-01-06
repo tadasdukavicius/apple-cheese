@@ -1,16 +1,13 @@
 import Link from 'next/link';
 
 export default async function Home() {
-  const res = await fetch(`http://localhost:8008/api/health`);
-  const data = await res.json()
-
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       {/* Main Content */}
       <main className="flex items-center justify-center py-32 px-4">
         <div className="text-center max-w-2xl">
           <h1 className="text-4xl font-semibold text-black dark:text-zinc-50 mb-6">
-            Welcome to Apple & Cheese {data.status}
+            Welcome to Apple & Cheese
           </h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
             Browse our selection of premium products and start shopping today.

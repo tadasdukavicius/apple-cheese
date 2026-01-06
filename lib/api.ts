@@ -1,5 +1,7 @@
-export async function fetchAPI<T>(path: string): Promise<T> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${path}`;
+export async function fetchAPI<T>(endpoint: string): Promise<T> {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`;
+
+    console.log('iiiitestastast', url)
 
     const res = await fetch(url);
 
