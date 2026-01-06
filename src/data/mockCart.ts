@@ -1,0 +1,4 @@
+export const cart = [
+  { productId: '1', quantity: 2 },
+  { productId: '2', quantity: 1 },
+];
