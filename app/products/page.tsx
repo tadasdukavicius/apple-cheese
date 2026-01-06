@@ -7,7 +7,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetchAPI<Product[]>("/api/products")
+    fetchAPI<Product[]>("products")
       .then(setProducts)
       .catch(console.error);
   }, []);
