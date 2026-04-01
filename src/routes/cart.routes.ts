@@ -1,9 +1,12 @@
-import { Router } from "express";
-import { getCart, addToCart } from "../controllers/cart.controller.js";
+import { Router } from 'express';
+import {
+  addToCartHandler,
+  getCartHandler
+} from '../controllers/cart.controller';
 
 const router = Router();
 
-router.get("/", getCart);
-router.post("/add", addToCart);
+router.get('/', getCartHandler);
+router.post('/', addToCartHandler);
 
 export default router;
