@@ -22,7 +22,8 @@ export const authMiddleware = async (
 
     req.user = {
       id: data.user.id,
-      email: data.user.email || undefined
+      email: data.user.email || undefined,
+      token
     };
 
     next();
