@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link"
 import { Product } from "../../../types/product"
 import { fetchAPI } from "../../../lib/api";
+import AddToCartButton from "../../../components/AddToCartButton";
 
 interface ProductDetailPageProps {
   params: Promise<{
@@ -44,7 +45,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-black dark:text-zinc-50 mb-4">Features:</h3>
               <ul className="space-y-2">
-                {product.features.map((feature, index) => (
+                {(product.features ?? []).map((feature, index) => (
                   <li key={index} className="flex items-center text-zinc-600 dark:text-zinc-400">
                     <span className="w-2 h-2 bg-black dark:bg-zinc-50 rounded-full mr-3"></span>
                     {feature}
@@ -55,9 +56,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
             {/* Actions */}
             <div className="flex gap-4">
-              <button className="flex-1 bg-black dark:bg-zinc-50 text-white dark:text-black py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition">
-                Add to Cart
-              </button>
+              <AddToCartButton productId={id} />
               <button className="px-6 py-3 border-2 border-black dark:border-zinc-50 text-black dark:text-zinc-50 rounded-lg font-medium hover:bg-black hover:text-white dark:hover:bg-zinc-50 dark:hover:text-black transition">
                 ♥ Save
               </button>
