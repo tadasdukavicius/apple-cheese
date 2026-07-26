@@ -1,57 +1,67 @@
-import { supabase } from '../config/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 
-export const createOrder = async (userId: string) => {
-  const { data: cartItems, error: cartError } = await supabase
+const createUserClient = (token: string) =>
+  createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+
+interface ShippingAddress {
+  street: string;
+  houseNumber: string;
+  flat?: string;
+  city: string;
+  postalCode: string;
+  country: 'Lithuania';
+}
+
+export const createOrder = async (
+  userId: string,
+  token: string,
+  phone: string,
+  shippingAddress: ShippingAddress
+) => {
+  const db = createUserClient(token);
+
+  const { data: cartItems, error: cartError } = await db
     .from('cart_items')
-    .select('*')
+    .select('*, products (price)')
     .eq('user_id', userId);
 
   if (cartError) throw new Error(cartError.message);
+  if (!cartItems || cartItems.length === 0) throw new Error('Cart is empty');
 
-  if (!cartItems || cartItems.length === 0) {
-    throw new Error('Cart is empty');
-  }
+  const total = cartItems.reduce((sum: number, item: any) => {
+    return sum + parseFloat(item.products.price) * item.quantity;
+  }, 0);
 
-  let total = 0;
-
-  for (const item of cartItems) {
-    const { data: product } = await supabase
-      .from('products')
-      .select('price')
-      .eq('id', item.product_id)
-      .single();
-
-    total += product.price * item.quantity;
-  }
-
-  const { data: order, error: orderError } = await supabase
+  const { data: order, error: orderError } = await db
     .from('orders')
     .insert({
       user_id: userId,
       total_price: total,
-      status: 'pending'
+      status: 'pending',
+      phone,
+      shipping_address: shippingAddress,
     })
     .select()
     .single();
 
   if (orderError) throw new Error(orderError.message);
 
-  for (const item of cartItems) {
-    const { data: product } = await supabase
-      .from('products')
-      .select('price')
-      .eq('id', item.product_id)
-      .single();
+  const orderItems = cartItems.map((item: any) => ({
+    order_id: order.id,
+    product_id: item.product_id,
+    quantity: item.quantity,
+    price_at_purchase: parseFloat(item.products.price),
+  }));
 
-    await supabase.from('order_items').insert({
-      order_id: order.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price_at_purchase: product.price
-    });
-  }
+  const { error: itemsError } = await db.from('order_items').insert(orderItems);
 
-  await supabase.from('cart_items').delete().eq('user_id', userId);
+  if (itemsError) throw new Error(itemsError.message);
+
+  await db.from('cart_items').delete().eq('user_id', userId);
 
   return order;
 };
