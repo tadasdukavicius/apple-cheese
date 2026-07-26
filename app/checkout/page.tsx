@@ -1,265 +1,305 @@
-export default function CheckoutPage() {
-  const cartItems = [
-    { id: "1", name: "Premium Apple Selection", price: 29.99, quantity: 2 },
-    { id: "3", name: "Apple & Cheese Gift Box", price: 49.99, quantity: 1 },
-  ];
+'use client';
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = 5.99;
+import { useEffect, useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
+import { fetchAPI, postAPI } from '../../lib/api';
+
+interface CartProduct {
+  id: string;
+  name: string;
+  price: string | number;
+}
+
+interface CartItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+  products: CartProduct;
+}
+
+const inputClass =
+  'w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-zinc-400';
+
+const labelClass = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2';
+
+export default function CheckoutPage() {
+  const { session, user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loadingCart, setLoadingCart] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const [street, setStreet] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  const [flat, setFlat] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!session) { router.push('/login'); return; }
+    fetchAPI<CartItem[]>('cart', session.access_token)
+      .then(setCartItems)
+      .catch(console.error)
+      .finally(() => setLoadingCart(false));
+  }, [session, authLoading, router]);
+
+  const parsePrice = (price: string | number) =>
+    parseFloat(String(price).replace(/[^0-9.]/g, ''));
+
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + parsePrice(item.products.price) * item.quantity,
+    0
+  );
+  const shipping = cartItems.length > 0 ? 5.99 : 0;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!session) return;
+    if (cartItems.length === 0) { setError('Your cart is empty.'); return; }
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await postAPI(
+        'orders',
+        {
+          phone,
+          shippingAddress: {
+            street,
+            houseNumber,
+            flat: flat || undefined,
+            city,
+            postalCode,
+            country: 'Lithuania',
+          },
+        },
+        session.access_token
+      );
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (authLoading || loadingCart) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+        <p className="text-zinc-500 dark:text-zinc-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center px-4">
+        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-12 text-center max-w-md w-full">
+          <div className="text-5xl mb-6">&#10003;</div>
+          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50 mb-3">Order placed!</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 mb-8">
+            Thank you for your order. We&apos;ll get it ready for delivery soon.
+          </p>
+          <a
+            href="/products"
+            className="inline-block bg-black dark:bg-zinc-50 text-white dark:text-black px-8 py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+          >
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-semibold text-black dark:text-zinc-50 mb-8">
-          Checkout
-        </h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Checkout Form */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Contact Information */}
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">
-                Contact Information
-              </h2>
-              <div className="space-y-4">
+        <h1 className="text-3xl font-semibold text-black dark:text-zinc-50 mb-8">Checkout</h1>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Form */}
+            <div className="lg:col-span-2 space-y-8">
+
+              {/* Contact */}
+              <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">Contact</h2>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Email Address
-                  </label>
+                  <label className={labelClass}>Email</label>
                   <input
                     type="email"
-                    id="email"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="Enter your email"
-                  />
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="newsletter"
-                    className="mr-2"
-                  />
-                  <label htmlFor="newsletter" className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Subscribe to our newsletter for updates and offers
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Shipping Address */}
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">
-                Shipping Address
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="First name"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="Last name"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="address" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="Street address"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    id="city"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="state" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    State
-                  </label>
-                  <select
-                    id="state"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                  >
-                    <option value="">Select state</option>
-                    <option value="CA">California</option>
-                    <option value="NY">New York</option>
-                    <option value="TX">Texas</option>
-                    <option value="FL">Florida</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="zipCode" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    ZIP Code
-                  </label>
-                  <input
-                    type="text"
-                    id="zipCode"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="ZIP code"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="Phone number"
+                    value={user?.email ?? ''}
+                    readOnly
+                    className={`${inputClass} opacity-60 cursor-not-allowed`}
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Payment Information */}
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">
-                Payment Information
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="cardNumber" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Card Number
-                  </label>
-                  <input
-                    type="text"
-                    id="cardNumber"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="1234 5678 9012 3456"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              {/* Shipping Address */}
+              <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">Shipping Address</h2>
+                <div className="space-y-4">
+
+                  {/* Country — fixed */}
                   <div>
-                    <label htmlFor="expiryDate" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Expiry Date
-                    </label>
+                    <label className={labelClass}>Country</label>
                     <input
                       type="text"
-                      id="expiryDate"
-                      className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                      placeholder="MM/YY"
+                      value="Lithuania"
+                      readOnly
+                      className={`${inputClass} opacity-60 cursor-not-allowed`}
                     />
                   </div>
+
+                  {/* Street */}
                   <div>
-                    <label htmlFor="cvv" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      CVV
-                    </label>
+                    <label className={labelClass}>Street</label>
                     <input
                       type="text"
-                      id="cvv"
-                      className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                      placeholder="123"
+                      required
+                      value={street}
+                      onChange={e => setStreet(e.target.value)}
+                      placeholder="Street name"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-                <div>
-                  <label htmlFor="cardName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Name on Card
-                  </label>
-                  <input
-                    type="text"
-                    id="cardName"
-                    className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50"
-                    placeholder="Full name as on card"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Order Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">
-                Order Summary
-              </h2>
-              
-              {/* Cart Items */}
-              <div className="space-y-4 mb-6">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium text-black dark:text-zinc-50">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Quantity: {item.quantity}
-                      </p>
+                  {/* House number + flat */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>House Number</label>
+                      <input
+                        type="text"
+                        required
+                        value={houseNumber}
+                        onChange={e => setHouseNumber(e.target.value)}
+                        placeholder="e.g. 12"
+                        className={inputClass}
+                      />
                     </div>
-                    <span className="text-sm font-medium text-black dark:text-zinc-50">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </span>
+                    <div>
+                      <label className={labelClass}>Flat <span className="text-zinc-400">(optional)</span></label>
+                      <input
+                        type="text"
+                        value={flat}
+                        onChange={e => setFlat(e.target.value)}
+                        placeholder="e.g. 4A"
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
-                ))}
+
+                  {/* City + postal code */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>City</label>
+                      <input
+                        type="text"
+                        required
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        placeholder="e.g. Vilnius"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Postal Code</label>
+                      <input
+                        type="text"
+                        required
+                        value={postalCode}
+                        onChange={e => setPostalCode(e.target.value)}
+                        placeholder="e.g. LT-01100"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className={labelClass}>Phone Number</label>
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      placeholder="+370 600 00000"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
 
-              {/* Order Totals */}
-              <div className="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-zinc-600 dark:text-zinc-400">Subtotal:</span>
-                  <span className="text-black dark:text-zinc-50">${subtotal.toFixed(2)}</span>
+            {/* Right: Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6 sticky top-24">
+                <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-6">Order Summary</h2>
+
+                <div className="space-y-4 mb-6">
+                  {cartItems.length === 0 ? (
+                    <p className="text-zinc-500 dark:text-zinc-400 text-sm">Your cart is empty.</p>
+                  ) : (
+                    cartItems.map(item => (
+                      <div key={item.id} className="flex justify-between items-start">
+                        <div className="flex-1 pr-4">
+                          <p className="text-sm font-medium text-black dark:text-zinc-50">{item.products.name}</p>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400">Qty: {item.quantity}</p>
+                        </div>
+                        <span className="text-sm font-medium text-black dark:text-zinc-50">
+                          ${(parsePrice(item.products.price) * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-zinc-600 dark:text-zinc-400">Shipping:</span>
-                  <span className="text-black dark:text-zinc-50">${shipping.toFixed(2)}</span>
+
+                <div className="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-600 dark:text-zinc-400">Subtotal</span>
+                    <span className="text-black dark:text-zinc-50">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-600 dark:text-zinc-400">Shipping</span>
+                    <span className="text-black dark:text-zinc-50">${shipping.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-600 dark:text-zinc-400">Tax</span>
+                    <span className="text-black dark:text-zinc-50">${tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-base font-semibold border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                    <span className="text-black dark:text-zinc-50">Total</span>
+                    <span className="text-black dark:text-zinc-50">${total.toFixed(2)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-zinc-600 dark:text-zinc-400">Tax:</span>
-                  <span className="text-black dark:text-zinc-50">${tax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-semibold border-t border-zinc-200 dark:border-zinc-700 pt-3">
-                  <span className="text-black dark:text-zinc-50">Total:</span>
-                  <span className="text-black dark:text-zinc-50">${total.toFixed(2)}</span>
-                </div>
+
+                {error && (
+                  <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting || cartItems.length === 0}
+                  className="w-full mt-6 bg-black dark:bg-zinc-50 text-white dark:text-black py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition disabled:opacity-50"
+                >
+                  {submitting ? 'Placing order...' : 'Place Order'}
+                </button>
               </div>
-
-              {/* Place Order Button */}
-              <button className="w-full mt-6 bg-black dark:bg-zinc-50 text-white dark:text-black py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition">
-                Place Order
-              </button>
-
-              {/* Security Notice */}
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-4 text-center">
-                🔒 Your payment information is secure and encrypted
-              </p>
             </div>
           </div>
-        </div>
+        </form>
 
-        {/* Continue Shopping Link */}
         <div className="mt-8 text-center">
-          <a
-            href="/cart"
-            className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50 transition"
-          >
+          <a href="/cart" className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50 transition">
             ← Return to Cart
           </a>
         </div>
