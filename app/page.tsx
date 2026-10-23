@@ -19,12 +19,12 @@ export default async function Home() {
             >
               Shop Now
             </Link>
-            <a
+            <Link
               href="/login"
               className="border-2 border-black dark:border-zinc-50 text-black dark:text-zinc-50 px-8 py-3 rounded-lg font-medium hover:bg-black hover:text-white dark:hover:bg-zinc-50 dark:hover:text-black transition"
             >
               Sign In
-            </a>
+            </Link>
           </div>
         </div>
       </main>

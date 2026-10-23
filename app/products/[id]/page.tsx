@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link"
 import Image from "next/image";
@@ -12,12 +14,23 @@ interface ProductDetailPageProps {
   }>;
 }
 
-export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const { id } = await params;
-  const product = await fetchAPI<Product>(`products/${id}`).catch((err) => {
+const getProduct = cache((id: string) =>
+  fetchAPI<Product>(`products/${id}`).catch((err) => {
     if (err instanceof ApiError && (err.status === 404 || err.status === 400)) return null;
     throw err;
-  });
+  })
+);
+
+export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProduct(id);
+  if (!product) return { title: "Product not found | Apple & Cheese" };
+  return { title: `${product.name} | Apple & Cheese`, description: product.description };
+}
+
+export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
     notFound();
@@ -69,9 +82,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             {/* Actions */}
             <div className="flex gap-4">
               <AddToCartButton productId={id} />
-              <button className="px-6 py-3 border-2 border-black dark:border-zinc-50 text-black dark:text-zinc-50 rounded-lg font-medium hover:bg-black hover:text-white dark:hover:bg-zinc-50 dark:hover:text-black transition">
-                ♥ Save
-              </button>
             </div>
 
             {/* Back to Products */}
