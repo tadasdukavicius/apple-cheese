@@ -24,5 +24,14 @@ export const createOrderSchema = z.object({
   }),
 });
 
+export const CATEGORIES = ['apples', 'cheese', 'gifts', 'other'] as const;
+
+export const productQuerySchema = z.object({
+  q: z.string().trim().max(60).optional(),
+  category: z.enum(CATEGORIES).optional(),
+  sort: z.enum(['newest', 'price_asc', 'price_desc', 'name']).default('newest'),
+});
+
+export type ProductQuery = z.infer<typeof productQuerySchema>;
 export type AddToCartInput = z.infer<typeof addToCartSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;

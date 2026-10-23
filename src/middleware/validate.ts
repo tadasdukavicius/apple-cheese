@@ -6,7 +6,7 @@ type Source = 'body' | 'params' | 'query';
 
 export const validate =
   (schema: ZodType, source: Source = 'body') =>
-  (req: Request, _res: Response, next: NextFunction) => {
+  (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req[source]);
     if (!result.success) {
       const details = result.error.issues.map((i) => ({
@@ -16,5 +16,7 @@ export const validate =
       return next(AppError.badRequest('Validation failed', details));
     }
     if (source === 'body') req.body = result.data;
+    // Express 5 exposes req.query as a getter, so parsed values go to res.locals
+    else if (source === 'query') res.locals.query = result.data;
     next();
   };

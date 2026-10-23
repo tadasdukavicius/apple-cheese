@@ -1,7 +1,12 @@
 import { createUserClient } from '../config/supabaseClient.js';
 import { PRICING } from '../config/pricing.js';
+import { paymentProvider } from '../payments/index.js';
+import { AppError } from '../utils/AppError.js';
 import { fromDbError } from '../utils/dbError.js';
 import type { CreateOrderInput } from '../schemas/index.js';
+import type { Order } from '../types/index.js';
+
+const ORDER_SELECT = '*, order_items (id, product_id, quantity, price_at_purchase, products (id, name, image_url))';
 
 /**
  * Creates the order, its items and clears the cart in a single transaction
@@ -17,5 +22,49 @@ export const createOrder = async (token: string, input: CreateOrderInput) => {
   });
 
   if (error) throw fromDbError(error);
+  return data as Order;
+};
+
+export const listOrders = async (userId: string, token: string) => {
+  const { data, error } = await createUserClient(token)
+    .from('orders')
+    .select(ORDER_SELECT)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw fromDbError(error);
   return data;
+};
+
+export const getOrder = async (id: string, userId: string, token: string) => {
+  const { data, error } = await createUserClient(token)
+    .from('orders')
+    .select(ORDER_SELECT)
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single();
+
+  if (error) throw fromDbError(error);
+  return data;
+};
+
+/** Charges the order through the payment provider, then records it as paid. */
+export const payOrder = async (id: string, userId: string, token: string) => {
+  const order = await getOrder(id, userId, token);
+  if (order.status !== 'pending') throw AppError.badRequest('Order is not awaiting payment');
+
+  const result = await paymentProvider.charge({
+    orderId: order.id,
+    amount: Number(order.total_price),
+    currency: PRICING.currency,
+  });
+  if (!result.success) throw new AppError(402, `Payment failed: ${result.reason}`);
+
+  const { data, error } = await createUserClient(token).rpc('mark_order_paid', {
+    p_order_id: id,
+    p_reference: result.reference,
+  });
+
+  if (error) throw fromDbError(error);
+  return data as Order;
 };

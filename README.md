@@ -24,13 +24,16 @@ All routes are under `/api`. Authenticated routes need `Authorization: Bearer <S
 | --- | --- | --- | --- |
 | GET | `/health` | no | Liveness check |
 | GET | `/pricing` | no | Currency (EUR), flat shipping and tax rate |
-| GET | `/products` | no | List products |
+| GET | `/products` | no | List products. Query: `q` (search), `category` (`apples`, `cheese`, `gifts`, `other`), `sort` (`newest`, `price_asc`, `price_desc`, `name`) |
 | GET | `/products/:id` | no | Product detail |
 | GET | `/cart` | yes | Cart items with products |
 | POST | `/cart` | yes | Add `{ productId, quantity }` (increments existing) |
 | PATCH | `/cart/:productId` | yes | Set `{ quantity }` |
 | DELETE | `/cart/:productId` | yes | Remove item |
+| GET | `/orders` | yes | Your orders with items, newest first |
+| GET | `/orders/:id` | yes | One of your orders |
 | POST | `/orders` | yes | Create order from cart `{ phone, shippingAddress }` |
+| POST | `/orders/:id/pay` | yes | Pay a pending order through the payment provider |
 
 Errors use one shape: `{ "error": { "message": "...", "details": [...] } }`.
 
@@ -39,4 +42,4 @@ Errors use one shape: `{ "error": { "message": "...", "details": [...] } }`.
 - **Row Level Security:** cart and order queries run with the caller's JWT, so Postgres enforces ownership. The service-role key is used only for public product reads and token verification.
 - **Atomic orders:** `create_order()` (SQL function) builds the order, its items and clears the cart in one transaction. Totals are computed from database prices; the client never sends amounts.
 - **Pricing rules** live in [`src/config/pricing.ts`](./src/config/pricing.ts) (EUR, 5.99 shipping, 21% VAT).
-- **Payments:** not integrated yet. Orders are created with status `pending`.
+- **Payments:** `src/payments/` defines a `PaymentProvider` interface and a fake provider that always approves. To add a real provider (Stripe, Paysera), implement `charge()` and swap it in `payments/index.ts`. Orders start as `pending`; `mark_order_paid()` is the only write path for payment state.
