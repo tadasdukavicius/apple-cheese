@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link"
+import Image from "next/image";
 import { Product } from "../../../types/product"
-import { fetchAPI } from "../../../lib/api";
+import { fetchAPI, ApiError } from "../../../lib/api";
+import { formatPrice } from "../../../lib/format";
 import AddToCartButton from "../../../components/AddToCartButton";
 
 interface ProductDetailPageProps {
@@ -12,7 +14,10 @@ interface ProductDetailPageProps {
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id } = await params;
-  const product = await fetchAPI<Product>(`products/${id}`);
+  const product = await fetchAPI<Product>(`products/${id}`).catch((err) => {
+    if (err instanceof ApiError && (err.status === 404 || err.status === 400)) return null;
+    throw err;
+  });
 
   if (!product) {
     notFound();
@@ -24,8 +29,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Image */}
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-8">
-            <div className="aspect-square bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center rounded-lg">
-              <span className="text-zinc-500 dark:text-zinc-400 text-lg">{product.image}</span>
+            <div className="relative aspect-square bg-zinc-200 dark:bg-zinc-800 rounded-lg overflow-hidden">
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                fill
+                priority
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+              />
             </div>
           </div>
 
@@ -35,7 +47,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               {product.name}
             </h1>
             <p className="text-3xl font-bold text-black dark:text-zinc-50 mb-6">
-              {product.price}
+              {formatPrice(product.price)}
             </p>
             <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
               {product.description}

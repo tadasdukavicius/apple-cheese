@@ -4,11 +4,13 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAPI, postAPI } from '../../lib/api';
+import { formatPrice } from '../../lib/format';
+import { calculateTotals, usePricing } from '../../lib/pricing';
 
 interface CartProduct {
   id: string;
   name: string;
-  price: string | number;
+  price: number;
 }
 
 interface CartItem {
@@ -49,16 +51,12 @@ export default function CheckoutPage() {
       .finally(() => setLoadingCart(false));
   }, [session, authLoading, router]);
 
-  const parsePrice = (price: string | number) =>
-    parseFloat(String(price).replace(/[^0-9.]/g, ''));
-
+  const pricing = usePricing();
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + parsePrice(item.products.price) * item.quantity,
+    (sum, item) => sum + item.products.price * item.quantity,
     0
   );
-  const shipping = cartItems.length > 0 ? 5.99 : 0;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const { shipping, tax, total } = calculateTotals(subtotal, cartItems.length, pricing);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -85,8 +83,8 @@ export default function CheckoutPage() {
         session.access_token
       );
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message ?? 'Something went wrong. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -256,7 +254,7 @@ export default function CheckoutPage() {
                           <p className="text-sm text-zinc-500 dark:text-zinc-400">Qty: {item.quantity}</p>
                         </div>
                         <span className="text-sm font-medium text-black dark:text-zinc-50">
-                          ${(parsePrice(item.products.price) * item.quantity).toFixed(2)}
+                          {formatPrice(item.products.price * item.quantity)}
                         </span>
                       </div>
                     ))
@@ -266,19 +264,19 @@ export default function CheckoutPage() {
                 <div className="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-600 dark:text-zinc-400">Subtotal</span>
-                    <span className="text-black dark:text-zinc-50">${subtotal.toFixed(2)}</span>
+                    <span className="text-black dark:text-zinc-50">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-600 dark:text-zinc-400">Shipping</span>
-                    <span className="text-black dark:text-zinc-50">${shipping.toFixed(2)}</span>
+                    <span className="text-black dark:text-zinc-50">{formatPrice(shipping)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-600 dark:text-zinc-400">Tax</span>
-                    <span className="text-black dark:text-zinc-50">${tax.toFixed(2)}</span>
+                    <span className="text-black dark:text-zinc-50">{formatPrice(tax)}</span>
                   </div>
                   <div className="flex justify-between text-base font-semibold border-t border-zinc-200 dark:border-zinc-700 pt-3">
                     <span className="text-black dark:text-zinc-50">Total</span>
-                    <span className="text-black dark:text-zinc-50">${total.toFixed(2)}</span>
+                    <span className="text-black dark:text-zinc-50">{formatPrice(total)}</span>
                   </div>
                 </div>
 

@@ -30,9 +30,9 @@ export default function AddToCartButton({ productId }: AddToCartButtonProps) {
       await postAPI('cart', { productId, quantity: 1 }, session.access_token);
       setStatus('success');
       setTimeout(() => setStatus('idle'), 2500);
-    } catch (err: any) {
+    } catch (err) {
       setStatus('error');
-      setErrorMessage(err.message ?? 'Something went wrong');
+      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong');
     }
   }
 
