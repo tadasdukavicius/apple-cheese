@@ -1,51 +1,49 @@
-export async function fetchAPI<T>(endpoint: string, token?: string): Promise<T> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8008/api/';
 
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await fetch(url, { headers });
-
-    if (!res.ok) {
-        throw new Error(await res.text());
-    }
-
-    return res.json() as Promise<T>;
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-export async function postAPI<T>(endpoint: string, body: unknown, token?: string): Promise<T> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`;
+async function request<T>(
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  endpoint: string,
+  body?: unknown,
+  token?: string
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 
-    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+  if (!res.ok) {
+    // API errors look like { error: { message, details? } }
+    const payload = await res.json().catch(() => null);
+    throw new ApiError(res.status, payload?.error?.message ?? res.statusText);
+  }
 
-    if (!res.ok) throw new Error(await res.text());
-
-    return res.json() as Promise<T>;
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
 }
 
-export async function patchAPI<T>(endpoint: string, body: unknown, token?: string): Promise<T> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`;
+export const fetchAPI = <T>(endpoint: string, token?: string) =>
+  request<T>('GET', endpoint, undefined, token);
 
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+export const postAPI = <T>(endpoint: string, body: unknown, token?: string) =>
+  request<T>('POST', endpoint, body, token);
 
-    const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
+export const patchAPI = <T>(endpoint: string, body: unknown, token?: string) =>
+  request<T>('PATCH', endpoint, body, token);
 
-    if (!res.ok) throw new Error(await res.text());
-
-    return res.json() as Promise<T>;
-}
-
-export async function deleteAPI(endpoint: string, token?: string): Promise<void> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`;
-
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await fetch(url, { method: 'DELETE', headers });
-
-    if (!res.ok) throw new Error(await res.text());
-}
+export const deleteAPI = (endpoint: string, token?: string) =>
+  request<void>('DELETE', endpoint, undefined, token);

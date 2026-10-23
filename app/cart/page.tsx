@@ -4,20 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAPI, patchAPI, deleteAPI } from '../../lib/api';
-
-interface CartProduct {
-  id: string;
-  name: string;
-  price: string | number;
-  description: string;
-  image: string;
-}
+import { formatPrice } from '../../lib/format';
+import { calculateTotals, usePricing } from '../../lib/pricing';
+import { Product } from '../../types/product';
 
 interface CartItem {
   id: string;
   product_id: string;
   quantity: number;
-  products: CartProduct;
+  products: Product;
 }
 
 export default function CartPage() {
@@ -64,12 +59,9 @@ export default function CartPage() {
     }
   }
 
-  const parsePrice = (price: string | number) => parseFloat(String(price).replace(/[^0-9.]/g, ''));
-
-  const subtotal = cartItems.reduce((sum, item) => sum + parsePrice(item.products.price) * item.quantity, 0);
-  const shipping = cartItems.length > 0 ? 5.99 : 0;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const pricing = usePricing();
+  const subtotal = cartItems.reduce((sum, item) => sum + item.products.price * item.quantity, 0);
+  const { shipping, tax, total } = calculateTotals(subtotal, cartItems.length, pricing);
 
   if (authLoading || loading) {
     return (
@@ -95,7 +87,7 @@ export default function CartPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-black dark:text-zinc-50">{item.products.name}</h3>
-                      <p className="text-zinc-600 dark:text-zinc-400">{item.products.price} each</p>
+                      <p className="text-zinc-600 dark:text-zinc-400">{formatPrice(item.products.price)} each</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -115,7 +107,7 @@ export default function CartPage() {
                       </button>
                     </div>
                     <span className="font-semibold text-black dark:text-zinc-50 w-20 text-right">
-                      ${(parsePrice(item.products.price) * item.quantity).toFixed(2)}
+                      {formatPrice(item.products.price * item.quantity)}
                     </span>
                     <button
                       onClick={() => handleRemove(item.product_id)}
@@ -145,19 +137,19 @@ export default function CartPage() {
           <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-4">Order Summary</h2>
           <div className="flex justify-between mb-2">
             <span className="text-zinc-700 dark:text-zinc-300">Subtotal:</span>
-            <span className="text-black dark:text-zinc-50">${subtotal.toFixed(2)}</span>
+            <span className="text-black dark:text-zinc-50">{formatPrice(subtotal)}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-zinc-700 dark:text-zinc-300">Shipping:</span>
-            <span className="text-black dark:text-zinc-50">${shipping.toFixed(2)}</span>
+            <span className="text-black dark:text-zinc-50">{formatPrice(shipping)}</span>
           </div>
           <div className="flex justify-between mb-4 border-b border-zinc-200 dark:border-zinc-700 pb-4">
             <span className="text-zinc-700 dark:text-zinc-300">Tax:</span>
-            <span className="text-black dark:text-zinc-50">${tax.toFixed(2)}</span>
+            <span className="text-black dark:text-zinc-50">{formatPrice(tax)}</span>
           </div>
           <div className="flex justify-between text-lg font-semibold">
             <span className="text-black dark:text-zinc-50">Total:</span>
-            <span className="text-black dark:text-zinc-50">${total.toFixed(2)}</span>
+            <span className="text-black dark:text-zinc-50">{formatPrice(total)}</span>
           </div>
           <a
             href="/checkout"

@@ -1,8 +1,9 @@
 export interface Product {
   id: string;
   name: string;
-  price: string;
   description: string;
-  image: string;
-  features: Array<string>;
+  price: number;
+  image_url: string;
+  features: string[];
+  created_at: string;
 }
