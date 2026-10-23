@@ -10,6 +10,7 @@ create table if not exists public.products (
   description text not null default '',
   price       numeric(10,2) not null check (price >= 0),
   image_url   text not null default '',
+  category    text not null default 'other' check (category in ('apples', 'cheese', 'gifts', 'other')),
   features    text[] not null default '{}',
   created_at  timestamptz not null default now()
 );
@@ -35,6 +36,8 @@ create table if not exists public.orders (
   total_price      numeric(10,2) not null,
   phone            text not null,
   shipping_address jsonb not null,
+  payment_reference text,
+  paid_at          timestamptz,
   created_at       timestamptz not null default now()
 );
 
@@ -57,16 +60,20 @@ alter table public.cart_items  enable row level security;
 alter table public.orders      enable row level security;
 alter table public.order_items enable row level security;
 
+drop policy if exists "products are public" on public.products;
 create policy "products are public"
   on public.products for select using (true);
 
+drop policy if exists "users manage their own cart" on public.cart_items;
 create policy "users manage their own cart"
   on public.cart_items for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "users read their own orders" on public.orders;
 create policy "users read their own orders"
   on public.orders for select using (auth.uid() = user_id);
 
+drop policy if exists "users read their own order items" on public.order_items;
 create policy "users read their own order items"
   on public.order_items for select
   using (exists (
@@ -149,3 +156,31 @@ $$;
 
 revoke all on function public.create_order(text, jsonb, numeric, numeric) from public, anon;
 grant execute on function public.create_order(text, jsonb, numeric, numeric) to authenticated;
+
+-- Marks the caller's pending order as paid. Called by the API only after the
+-- payment provider confirms the charge. Orders have no update policy, so this
+-- is the single write path for payment state.
+create or replace function public.mark_order_paid(p_order_id uuid, p_reference text)
+returns public.orders
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+begin
+  update orders
+     set status = 'paid', payment_reference = p_reference, paid_at = now()
+   where id = p_order_id and user_id = auth.uid() and status = 'pending'
+  returning * into v_order;
+
+  if v_order.id is null then
+    raise exception 'Order not found or not payable' using errcode = 'P0001';
+  end if;
+
+  return v_order;
+end;
+$$;
+
+revoke all on function public.mark_order_paid(uuid, text) from public, anon;
+grant execute on function public.mark_order_paid(uuid, text) to authenticated;
