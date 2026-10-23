@@ -1,61 +1,37 @@
-import { Response } from 'express';
-import { addToCart, getCart, updateCartItemQuantity, removeFromCart } from '../services/cart.service';
-import { AuthenticatedRequest } from '../types/express.d';
-import { AddToCartDTO } from '../types/cart.types';
+import type { Request, Response } from 'express';
+import {
+  addToCart,
+  getCart,
+  updateCartItemQuantity,
+  removeFromCart,
+} from '../services/cart.service.js';
+import type { AddToCartInput } from '../schemas/index.js';
 
-export const addToCartHandler = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { productId, quantity } = req.body as AddToCartDTO;
-    const result = await addToCart(userId, productId, quantity, req.user!.token);
-
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
+// authMiddleware guarantees req.user on these routes
+export const getCartHandler = async (req: Request, res: Response) => {
+  const { id, token } = req.user!;
+  res.json(await getCart(id, token));
 };
 
-export const getCartHandler = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const cart = await getCart(userId, req.user!.token);
-
-    res.json(cart);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
+export const addToCartHandler = async (req: Request, res: Response) => {
+  const { productId, quantity } = req.body as AddToCartInput;
+  res.status(201).json(await addToCart(productId, quantity, req.user!.token));
 };
 
-export const updateCartItemHandler = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { productId } = req.params;
-    const { quantity } = req.body as { quantity: number };
-
-    const result = await updateCartItemQuantity(userId, productId, quantity, req.user!.token);
-
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
+export const updateCartItemHandler = async (
+  req: Request<{ productId: string }>,
+  res: Response
+) => {
+  const { id, token } = req.user!;
+  const { quantity } = req.body as { quantity: number };
+  res.json(await updateCartItemQuantity(id, req.params.productId, quantity, token));
 };
 
-export const removeFromCartHandler = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { productId } = req.params;
-    await removeFromCart(userId, productId, req.user!.token);
-
-    res.status(204).send();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
+export const removeFromCartHandler = async (
+  req: Request<{ productId: string }>,
+  res: Response
+) => {
+  const { id, token } = req.user!;
+  await removeFromCart(id, req.params.productId, token);
+  res.status(204).send();
 };
