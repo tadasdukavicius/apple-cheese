@@ -1,41 +1,27 @@
-import { createClient } from '@supabase/supabase-js';
-import { CartItem } from '../types/cart.types';
-
-const createUserClient = (token: string) =>
-  createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
-
-export const addToCart = async (
-  userId: string,
-  productId: string,
-  quantity: number,
-  token: string
-): Promise<CartItem[]> => {
-  const { data, error } = await createUserClient(token)
-    .from('cart_items')
-    .upsert(
-      { user_id: userId, product_id: productId, quantity },
-      { onConflict: 'user_id,product_id' }
-    )
-    .select();
-
-  if (error) throw new Error(error.message);
-
-  return data as CartItem[];
-};
+import { createUserClient } from '../config/supabaseClient.js';
+import { fromDbError } from '../utils/dbError.js';
+import type { CartItem } from '../types/index.js';
 
 export const getCart = async (userId: string, token: string) => {
   const { data, error } = await createUserClient(token)
     .from('cart_items')
-    .select(`*, products (*)`)
-    .eq('user_id', userId);
+    .select('*, products (*)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
 
-  if (error) throw new Error(error.message);
-
+  if (error) throw fromDbError(error);
   return data;
+};
+
+/** Adds to the existing quantity atomically (see add_to_cart in supabase/schema.sql). */
+export const addToCart = async (productId: string, quantity: number, token: string) => {
+  const { data, error } = await createUserClient(token).rpc('add_to_cart', {
+    p_product_id: productId,
+    p_quantity: quantity,
+  });
+
+  if (error) throw fromDbError(error);
+  return data as CartItem;
 };
 
 export const updateCartItemQuantity = async (
@@ -52,8 +38,7 @@ export const updateCartItemQuantity = async (
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
-
+  if (error) throw fromDbError(error);
   return data as CartItem;
 };
 
@@ -68,5 +53,5 @@ export const removeFromCart = async (
     .eq('user_id', userId)
     .eq('product_id', productId);
 
-  if (error) throw new Error(error.message);
+  if (error) throw fromDbError(error);
 };

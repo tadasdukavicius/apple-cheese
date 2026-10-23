@@ -1,33 +1,16 @@
-import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../config/supabaseClient';
-import { AuthenticatedRequest } from '../types/express';
+import type { Request, Response, NextFunction } from 'express';
+import { supabase } from '../config/supabaseClient.js';
+import { AppError } from '../utils/AppError.js';
 
-export const authMiddleware = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+export const authMiddleware = async (req: Request, _res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  const token = header?.startsWith('Bearer ') ? header.slice(7).trim() : undefined;
 
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
+  if (!token) return next(AppError.unauthorized('No token provided'));
 
-    const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) return next(AppError.unauthorized('Invalid token'));
 
-    if (error || !data.user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    req.user = {
-      id: data.user.id,
-      email: data.user.email || undefined,
-      token
-    };
-
-    next();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
+  req.user = { id: data.user.id, email: data.user.email, token };
+  next();
 };
