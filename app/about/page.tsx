@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
@@ -42,18 +44,18 @@ export default function AboutPage() {
               Explore our carefully curated selection of premium apples and artisanal cheeses.
             </p>
             <div className="flex gap-4 justify-center">
-              <a
+              <Link
                 href="/products"
                 className="bg-black dark:bg-zinc-50 text-white dark:text-black px-8 py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
               >
                 Shop Products
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/contact"
                 className="border-2 border-black dark:border-zinc-50 text-black dark:text-zinc-50 px-8 py-3 rounded-lg font-medium hover:bg-black hover:text-white dark:hover:bg-zinc-50 dark:hover:text-black transition"
               >
                 Contact Us
-              </a>
+              </Link>
             </div>
           </div>
         </div>

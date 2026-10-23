@@ -1,24 +1,14 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
-import { fetchAPI, postAPI } from '../../lib/api';
+import { useCart } from '../../context/CartContext';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { postAPI } from '../../lib/api';
 import { formatPrice } from '../../lib/format';
 import { calculateTotals, usePricing } from '../../lib/pricing';
-
-interface CartProduct {
-  id: string;
-  name: string;
-  price: number;
-}
-
-interface CartItem {
-  id: string;
-  product_id: string;
-  quantity: number;
-  products: CartProduct;
-}
+import type { Order } from '../../types/order';
 
 const inputClass =
   'w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-zinc-400';
@@ -26,14 +16,12 @@ const inputClass =
 const labelClass = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2';
 
 export default function CheckoutPage() {
-  const { session, user, loading: authLoading } = useAuth();
+  const { session, user, loading: authLoading } = useRequireAuth();
+  const { items: cartItems, subtotal, loading: loadingCart, refresh } = useCart();
   const router = useRouter();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loadingCart, setLoadingCart] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const [street, setStreet] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
@@ -42,20 +30,7 @@ export default function CheckoutPage() {
   const [postalCode, setPostalCode] = useState('');
   const [phone, setPhone] = useState('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!session) { router.push('/login'); return; }
-    fetchAPI<CartItem[]>('cart', session.access_token)
-      .then(setCartItems)
-      .catch(console.error)
-      .finally(() => setLoadingCart(false));
-  }, [session, authLoading, router]);
-
   const pricing = usePricing();
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.products.price * item.quantity,
-    0
-  );
   const { shipping, tax, total } = calculateTotals(subtotal, cartItems.length, pricing);
 
   async function handleSubmit(e: FormEvent) {
@@ -66,8 +41,9 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setError(null);
 
+    let orderId: string | null = null;
     try {
-      await postAPI(
+      const order = await postAPI<Order>(
         'orders',
         {
           phone,
@@ -82,38 +58,25 @@ export default function CheckoutPage() {
         },
         session.access_token
       );
-      setSuccess(true);
+      orderId = order.id;
+      // The order exists now; if payment fails the user can retry from the order page.
+      await postAPI(`orders/${order.id}/pay`, {}, session.access_token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-    } finally {
-      setSubmitting(false);
+      if (!orderId) {
+        setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+        setSubmitting(false);
+        return;
+      }
     }
+
+    await refresh().catch(console.error);
+    router.push(`/orders/${orderId}?placed=1`);
   }
 
-  if (authLoading || loadingCart) {
+  if (authLoading || !session || loadingCart) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
         <p className="text-zinc-500 dark:text-zinc-400">Loading...</p>
-      </div>
-    );
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center px-4">
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-12 text-center max-w-md w-full">
-          <div className="text-5xl mb-6">&#10003;</div>
-          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50 mb-3">Order placed!</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mb-8">
-            Thank you for your order. We&apos;ll get it ready for delivery soon.
-          </p>
-          <a
-            href="/products"
-            className="inline-block bg-black dark:bg-zinc-50 text-white dark:text-black px-8 py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
-          >
-            Continue Shopping
-          </a>
-        </div>
       </div>
     );
   }
@@ -271,7 +234,7 @@ export default function CheckoutPage() {
                     <span className="text-black dark:text-zinc-50">{formatPrice(shipping)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-600 dark:text-zinc-400">Tax</span>
+                    <span className="text-zinc-600 dark:text-zinc-400">VAT</span>
                     <span className="text-black dark:text-zinc-50">{formatPrice(tax)}</span>
                   </div>
                   <div className="flex justify-between text-base font-semibold border-t border-zinc-200 dark:border-zinc-700 pt-3">
@@ -297,9 +260,9 @@ export default function CheckoutPage() {
         </form>
 
         <div className="mt-8 text-center">
-          <a href="/cart" className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50 transition">
+          <Link href="/cart" className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50 transition">
             ← Return to Cart
-          </a>
+          </Link>
         </div>
       </div>
     </div>
