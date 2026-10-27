@@ -1,3 +1,3 @@
-const eur = new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' });
+const eur = new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' });
 
 export const formatPrice = (amount: number) => eur.format(amount);
