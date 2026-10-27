@@ -1,9 +1,10 @@
 export interface OrderItem {
   id: string;
-  product_id: string;
+  product_name: string;
+  variant_label: string;
+  image_url: string;
   quantity: number;
   price_at_purchase: number;
-  products: { id: string; name: string; image_url: string } | null;
 }
 
 export interface Order {

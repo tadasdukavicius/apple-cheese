@@ -2,17 +2,17 @@
 
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center px-4">
+    <div className="min-h-[50vh] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <h1 className="text-2xl font-semibold text-black dark:text-zinc-50 mb-3">Something went wrong</h1>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-          We couldn&apos;t load this page. Please check your connection and try again.
+        <h1 className="text-2xl font-medium text-ink mb-3">Kažkas nepavyko</h1>
+        <p className="text-muted mb-6">
+          Nepavyko įkelti šio puslapio. Patikrinkite ryšį ir bandykite dar kartą.
         </p>
         <button
           onClick={reset}
-          className="bg-black dark:bg-zinc-50 text-white dark:text-black px-6 py-2 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+          className="btn-primary"
         >
-          Try again
+          Bandyti dar kartą
         </button>
       </div>
     </div>

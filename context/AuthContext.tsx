@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { translateAuthError } from '../lib/authErrors';
 import { supabase } from '../lib/supabase';
 
 interface AuthContextValue {
@@ -45,13 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
+    return { error: translateAuthError(error?.message) };
   }
 
   async function signUp(email: string, password: string) {
     const { data, error } = await supabase.auth.signUp({ email, password });
     // No session means the project requires email confirmation first
-    return { error: error?.message ?? null, needsConfirmation: !error && !data.session };
+    return { error: translateAuthError(error?.message), needsConfirmation: !error && !data.session };
   }
 
   async function signOut() {

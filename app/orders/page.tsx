@@ -19,25 +19,25 @@ export default function OrdersPage() {
     if (!token) return;
     fetchAPI<Order[]>('orders', token)
       .then(setOrders)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load orders.'));
+      .catch((err) => setError(err instanceof Error ? err.message : 'Nepavyko įkelti užsakymų.'));
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold text-black dark:text-zinc-50 mb-8">Your Orders</h1>
+    <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14">
+      <div>
+        <h1 className="text-4xl md:text-5xl font-medium text-ink mb-8">Jūsų užsakymai</h1>
 
-        {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-danger">{error}</p>}
 
         {!error && (authLoading || !orders) && (
-          <p className="text-zinc-500 dark:text-zinc-400">Loading orders...</p>
+          <p className="text-muted">Kraunami užsakymai...</p>
         )}
 
         {orders && orders.length === 0 && (
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-12 text-center">
-            <p className="text-zinc-600 dark:text-zinc-400 mb-4">You haven&apos;t placed any orders yet.</p>
-            <Link href="/products" className="text-black dark:text-zinc-50 font-medium underline">
-              Start shopping
+          <div className="card p-12 text-center">
+            <p className="text-muted mb-4">Dar neturite užsakymų.</p>
+            <Link href="/products" className="text-ink font-medium underline">
+              Pradėti apsipirkti
             </Link>
           </div>
         )}
@@ -47,21 +47,21 @@ export default function OrdersPage() {
             <li key={order.id}>
               <Link
                 href={`/orders/${order.id}`}
-                className="block bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6 hover:shadow-lg transition"
+                className="block card p-6  transition"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <p className="font-semibold text-black dark:text-zinc-50">
-                      Order #{order.id.slice(0, 8).toUpperCase()}
+                    <p className="font-semibold text-ink">
+                      Užsakymas Nr. {order.id.slice(0, 8).toUpperCase()}
                     </p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(order.created_at)}</p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-                      {order.order_items.reduce((n, i) => n + i.quantity, 0)} items
+                    <p className="text-sm text-muted">{formatDate(order.created_at)}</p>
+                    <p className="text-sm text-muted mt-2">
+                      Prekių: {order.order_items.reduce((n, i) => n + i.quantity, 0)}
                     </p>
                   </div>
                   <div className="text-right space-y-2">
                     <OrderStatusBadge status={order.status} />
-                    <p className="font-semibold text-black dark:text-zinc-50">{formatPrice(order.total_price)}</p>
+                    <p className="font-semibold text-ink">{formatPrice(order.total_price)}</p>
                   </div>
                 </div>
               </Link>

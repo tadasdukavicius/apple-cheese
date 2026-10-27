@@ -1,20 +1,20 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
-export const CATEGORY_OPTIONS = [
-  { value: '', label: 'All' },
-  { value: 'apples', label: 'Apples' },
-  { value: 'cheese', label: 'Cheese' },
-  { value: 'gifts', label: 'Gifts' },
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'Visi' },
+  { value: 'singles', label: 'Pavieniai' },
+  { value: 'gift_sets', label: 'Dovanų rinkiniai' },
 ];
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Featured' },
-  { value: 'price_asc', label: 'Price: low to high' },
-  { value: 'price_desc', label: 'Price: high to low' },
-  { value: 'name', label: 'Name' },
+  { value: 'newest', label: 'Rekomenduojami' },
+  { value: 'price_asc', label: 'Kaina: nuo mažiausios' },
+  { value: 'price_desc', label: 'Kaina: nuo didžiausios' },
+  { value: 'name', label: 'Pavadinimas' },
 ];
 
 interface Props {
@@ -23,80 +23,71 @@ interface Props {
   sort: string;
 }
 
-const inputClass =
-  'px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-zinc-400';
+function buildHref({ q, category, sort }: Props) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (category) params.set('category', category);
+  if (sort && sort !== 'newest') params.set('sort', sort);
+  const qs = params.toString();
+  return qs ? `/products?${qs}` : '/products';
+}
 
 export default function ProductFilters({ q, category, sort }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState(q);
 
-  function navigate(next: Partial<Props>) {
-    const merged = { q: search, category, sort, ...next };
-    const params = new URLSearchParams();
-    if (merged.q) params.set('q', merged.q);
-    if (merged.category) params.set('category', merged.category);
-    if (merged.sort && merged.sort !== 'newest') params.set('sort', merged.sort);
-    const qs = params.toString();
-    router.push(qs ? `/products?${qs}` : '/products');
-  }
-
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    navigate({ q: search.trim() });
+    router.push(buildHref({ q: search.trim(), category, sort }));
   }
 
   return (
-    <div className="flex flex-col gap-4 mb-8">
-      <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-        <form onSubmit={onSubmit} role="search" className="flex gap-2 flex-1 max-w-md">
-          <label htmlFor="product-search" className="sr-only">Search products</label>
-          <input
-            id="product-search"
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className={`${inputClass} flex-1`}
-          />
-          <button
-            type="submit"
-            className="bg-black dark:bg-zinc-50 text-white dark:text-black px-4 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
-          >
-            Search
-          </button>
-        </form>
-        <div className="flex items-center gap-2">
-          <label htmlFor="product-sort" className="text-sm text-zinc-600 dark:text-zinc-400">Sort by</label>
-          <select
-            id="product-sort"
-            value={sort}
-            onChange={(e) => navigate({ sort: e.target.value })}
-            className={inputClass}
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <div className="flex gap-2 flex-wrap" role="group" aria-label="Filter by category">
-        {CATEGORY_OPTIONS.map((o) => {
-          const active = o.value === category;
-          return (
-            <button
-              key={o.value}
-              onClick={() => navigate({ category: o.value })}
-              aria-pressed={active}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
-                active
-                  ? 'bg-black text-white dark:bg-zinc-50 dark:text-black border-transparent'
-                  : 'border-zinc-300 dark:border-zinc-600 text-black dark:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
+    <div className="border-b border-line pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <nav aria-label="Kategorijos" className="flex gap-6 text-sm">
+          {CATEGORY_OPTIONS.map((o) => {
+            const active = o.value === category;
+            return (
+              <Link
+                key={o.value}
+                href={buildHref({ q, category: o.value, sort })}
+                aria-current={active ? 'true' : undefined}
+                className={`pb-1 transition-colors hover:text-brand ${
+                  active ? 'border-b border-ink font-medium text-ink' : 'text-muted'
+                }`}
+              >
+                {o.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex flex-wrap items-center gap-4">
+          <form onSubmit={onSubmit} role="search" className="flex">
+            <label htmlFor="product-search" className="sr-only">Ieškoti produktų</label>
+            <input
+              id="product-search"
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Ieškoti..."
+              className="input !w-40 !py-2 text-sm sm:!w-52"
+            />
+          </form>
+          <div className="flex items-center gap-2">
+            <label htmlFor="product-sort" className="text-sm text-muted">Rūšiuoti</label>
+            <select
+              id="product-sort"
+              value={sort}
+              onChange={(e) => router.push(buildHref({ q, category, sort: e.target.value }))}
+              className="input !w-auto !py-2 text-sm"
             >
-              {o.label}
-            </button>
-          );
-        })}
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   );
