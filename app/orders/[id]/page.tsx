@@ -27,8 +27,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       .catch((err) =>
         setError(
           err instanceof ApiError && (err.status === 404 || err.status === 400)
-            ? 'Order not found.'
-            : 'Could not load this order.'
+            ? 'Užsakymas nerastas.'
+            : 'Nepavyko įkelti užsakymo.'
         )
       );
   }, [id, token]);
@@ -41,7 +41,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       await postAPI(`orders/${id}/pay`, {}, token);
       setOrder(await fetchAPI<Order>(`orders/${id}`, token));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Payment failed.');
+      setError(err instanceof Error ? err.message : 'Apmokėjimas nepavyko.');
     } finally {
       setPaying(false);
     }
@@ -49,17 +49,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   if (error && !order) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black flex flex-col items-center justify-center gap-4">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
-        <Link href="/orders" className="underline text-black dark:text-zinc-50">Back to orders</Link>
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+        <p className="text-danger">{error}</p>
+        <Link href="/orders" className="underline text-ink">Atgal į užsakymus</Link>
       </div>
     );
   }
 
   if (authLoading || !order) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
-        <p className="text-zinc-500 dark:text-zinc-400">Loading order...</p>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-muted">Kraunamas užsakymas...</p>
       </div>
     );
   }
@@ -67,65 +67,64 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const address = order.shipping_address;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14">
+      <div className="space-y-6">
         {justPlaced && (
-          <div role="status" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
-            <div className="text-3xl mb-2">&#10003;</div>
-            <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Thank you for your order!</h1>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
+          <div role="status" className="border-l-2 border-brand pl-5">
+            <h1 className="text-3xl text-ink md:text-4xl">Ačiū už jūsų užsakymą!</h1>
+            <p className="mt-2 text-muted">
               {order.status === 'paid'
-                ? "We've received your payment and will get your order ready for delivery."
-                : 'Your order is saved. Complete the payment below to confirm it.'}
+                ? "Gavome jūsų apmokėjimą ir ruošiame užsakymą siuntimui."
+                : 'Jūsų užsakymas išsaugotas. Apmokėkite žemiau, kad jį patvirtintumėte.'}
             </p>
           </div>
         )}
 
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8">
+        <div className="card p-8">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h2 className="text-2xl font-semibold text-black dark:text-zinc-50">
-                Order #{order.id.slice(0, 8).toUpperCase()}
+              <h2 className="text-2xl font-medium text-ink">
+                Užsakymas Nr. {order.id.slice(0, 8).toUpperCase()}
               </h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(order.created_at)}</p>
+              <p className="text-sm text-muted">{formatDate(order.created_at)}</p>
             </div>
             <OrderStatusBadge status={order.status} />
           </div>
 
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-700">
+          <ul className="divide-y divide-line">
             {order.order_items.map((item) => (
               <li key={item.id} className="flex items-center gap-4 py-4">
-                <div className="relative w-14 h-14 bg-zinc-200 dark:bg-zinc-800 rounded-lg overflow-hidden shrink-0">
-                  {item.products && (
-                    <Image src={item.products.image_url} alt={item.products.name} fill sizes="56px" className="object-cover" />
+                <div className="relative w-14 h-14 bg-line rounded-sm overflow-hidden shrink-0">
+                  {item.image_url && (
+                    <Image src={item.image_url} alt={item.product_name} fill sizes="56px" className="object-cover" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-black dark:text-zinc-50">{item.products?.name ?? 'Product'}</p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {item.quantity} × {formatPrice(item.price_at_purchase)}
+                  <p className="font-medium text-ink">{item.product_name}</p>
+                  <p className="text-sm text-muted">
+                    {item.variant_label} · {item.quantity} × {formatPrice(item.price_at_purchase)}
                   </p>
                 </div>
-                <span className="font-medium text-black dark:text-zinc-50">
+                <span className="font-medium text-ink">
                   {formatPrice(item.quantity * item.price_at_purchase)}
                 </span>
               </li>
             ))}
           </ul>
 
-          <dl className="border-t border-zinc-200 dark:border-zinc-700 mt-2 pt-4 space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-zinc-600 dark:text-zinc-400">Subtotal</dt><dd className="text-black dark:text-zinc-50">{formatPrice(order.subtotal)}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-600 dark:text-zinc-400">Shipping</dt><dd className="text-black dark:text-zinc-50">{formatPrice(order.shipping_price)}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-600 dark:text-zinc-400">VAT</dt><dd className="text-black dark:text-zinc-50">{formatPrice(order.tax_price)}</dd></div>
-            <div className="flex justify-between text-base font-semibold pt-2 border-t border-zinc-200 dark:border-zinc-700">
-              <dt className="text-black dark:text-zinc-50">Total</dt><dd className="text-black dark:text-zinc-50">{formatPrice(order.total_price)}</dd>
+          <dl className="border-t border-line mt-2 pt-4 space-y-2 text-sm">
+            <div className="flex justify-between"><dt className="text-muted">Tarpinė suma</dt><dd className="text-ink">{formatPrice(order.subtotal)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Pristatymas</dt><dd className="text-ink">{formatPrice(order.shipping_price)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">PVM</dt><dd className="text-ink">{formatPrice(order.tax_price)}</dd></div>
+            <div className="flex justify-between text-base font-semibold pt-2 border-t border-line">
+              <dt className="text-ink">Iš viso</dt><dd className="text-ink">{formatPrice(order.total_price)}</dd>
             </div>
           </dl>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8">
-          <h3 className="font-semibold text-black dark:text-zinc-50 mb-3">Delivery</h3>
-          <address className="not-italic text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+        <div className="card p-8">
+          <h3 className="font-semibold text-ink mb-3">Pristatymas</h3>
+          <address className="not-italic text-muted text-sm leading-relaxed">
             {address.street} {address.houseNumber}{address.flat ? `-${address.flat}` : ''}<br />
             {address.postalCode} {address.city}<br />
             {address.country}<br />
@@ -135,21 +134,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
         {order.status === 'pending' && (
           <div className="text-center space-y-3">
-            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
             <button
               onClick={handlePay}
               disabled={paying}
-              className="bg-black dark:bg-zinc-50 text-white dark:text-black px-8 py-3 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition disabled:opacity-50"
+              className="btn-primary px-8 py-3"
             >
-              {paying ? 'Processing...' : `Pay ${formatPrice(order.total_price)}`}
+              {paying ? 'Apdorojama...' : `Apmokėti ${formatPrice(order.total_price)}`}
             </button>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Demo mode: no real payment is taken.</p>
+            <p className="text-xs text-muted">Demonstracinis režimas: tikras mokėjimas neatliekamas.</p>
           </div>
         )}
 
         <div className="text-center">
-          <Link href="/orders" className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50 transition">
-            ← All orders
+          <Link href="/orders" className="text-muted hover:text-brand transition">
+            ← Visi užsakymai
           </Link>
         </div>
       </div>

@@ -5,7 +5,10 @@ import ProductFilters from "../../components/ProductFilters";
 import { fetchAPI } from "../../lib/api";
 import type { Product } from "../../types/product";
 
-export const metadata: Metadata = { title: "Products | Apple & Cheese" };
+export const metadata: Metadata = {
+  title: "Parduotuvė",
+  description: "Klasikinis, čili, riešutų, medaus ir cinamono obuolių sūris bei dovanų rinkiniai.",
+};
 
 interface ProductsPageProps {
   searchParams: Promise<{ q?: string; category?: string; sort?: string }>;
@@ -23,26 +26,30 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const products = await fetchAPI<Product[]>(`products${qs ? `?${qs}` : ""}`);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-semibold text-black dark:text-zinc-50 mb-8">Products</h1>
-        <ProductFilters q={q} category={category} sort={sort} />
+    <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
+      <header className="mb-8">
+        <h1 className="text-4xl text-ink md:text-5xl">Parduotuvė</h1>
+        <p className="mt-3 max-w-xl text-muted">
+          Lėtai troškintas obuolių sūris keliais skoniais. Pristatome visoje Lietuvoje.
+        </p>
+      </header>
 
-        {products.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-zinc-600 dark:text-zinc-400 mb-4">No products match your search.</p>
-            <Link href="/products" className="text-black dark:text-zinc-50 font-medium underline">
-              Clear filters
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
-      </div>
+      <ProductFilters q={q} category={category} sort={sort} />
+
+      {products.length === 0 ? (
+        <div className="py-20 text-center">
+          <p className="mb-4 text-muted">Pagal jūsų paiešką produktų nerasta.</p>
+          <Link href="/products" className="font-medium text-ink underline underline-offset-4">
+            Išvalyti filtrus
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14">
+          {products.map((product, i) => (
+            <ProductCard key={product.id} product={product} priority={i < 3} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

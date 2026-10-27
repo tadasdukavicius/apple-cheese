@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { formatDateLong } from '../../lib/date';
 
 export default function AccountPage() {
   const { user, loading, signOut } = useRequireAuth();
@@ -10,45 +11,38 @@ export default function AccountPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
-        <p className="text-zinc-500 dark:text-zinc-400">Loading...</p>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-muted">Kraunama...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
-      <div className="max-w-xl mx-auto bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-semibold text-black dark:text-zinc-50 mb-6">Account</h1>
-        <dl className="space-y-4 mb-8">
-          <div>
-            <dt className="text-sm text-zinc-500 dark:text-zinc-400">Email</dt>
-            <dd className="text-black dark:text-zinc-50">{user.email}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-zinc-500 dark:text-zinc-400">Member since</dt>
-            <dd className="text-black dark:text-zinc-50">
-              {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(user.created_at))}
-            </dd>
-          </div>
-        </dl>
-        <div className="flex gap-4">
-          <Link
-            href="/orders"
-            className="bg-black dark:bg-zinc-50 text-white dark:text-black px-6 py-2 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
-          >
-            View orders
-          </Link>
-          <button
-            onClick={async () => {
-              await signOut();
-              router.push('/');
-            }}
-            className="border border-zinc-300 dark:border-zinc-600 text-black dark:text-zinc-50 px-6 py-2 rounded-lg font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
-          >
-            Sign out
-          </button>
+    <div className="mx-auto max-w-2xl px-4 py-10 md:px-6 md:py-14">
+      <h1 className="text-4xl text-ink md:text-5xl">Paskyra</h1>
+
+      <dl className="mt-10 divide-y divide-line border-y border-line">
+        <div className="grid gap-1 py-4 sm:grid-cols-[10rem_1fr] sm:gap-6">
+          <dt className="text-muted">El. paštas</dt>
+          <dd className="break-all text-ink">{user.email}</dd>
         </div>
+        <div className="grid gap-1 py-4 sm:grid-cols-[10rem_1fr] sm:gap-6">
+          <dt className="text-muted">Narys nuo</dt>
+          <dd className="text-ink">{formatDateLong(user.created_at)}</dd>
+        </div>
+      </dl>
+
+      <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+        <Link href="/orders" className="btn-primary px-8 py-4">Peržiūrėti užsakymus</Link>
+        <button
+          onClick={async () => {
+            await signOut();
+            router.push('/');
+          }}
+          className="text-sm text-ink underline underline-offset-4 hover:text-brand"
+        >
+          Atsijungti
+        </button>
       </div>
     </div>
   );

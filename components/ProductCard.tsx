@@ -1,37 +1,40 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatPrice } from '../lib/format';
-import type { Product } from '../types/product';
-import AddToCartButton from './AddToCartButton';
+import { startingPrice, type Product } from '../types/product';
 
-export default function ProductCard({ product }: { product: Product }) {
+interface ProductCardProps {
+  product: Product;
+  /** Heading level, so the page outline stays correct on each page. */
+  headingAs?: 'h2' | 'h3';
+  priority?: boolean;
+}
+
+export default function ProductCard({ product, headingAs: Heading = 'h2', priority = false }: ProductCardProps) {
+  const sizes = product.variants.map((v) => v.label).join(' · ');
+
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition flex flex-col">
-      <div className="relative h-48 bg-zinc-200 dark:bg-zinc-800">
-        <Image
-          src={product.image_url}
-          alt={product.name}
-          fill
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
-          className="object-cover"
-        />
-      </div>
-      <div className="p-6 flex flex-col flex-1">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50 mb-2">{product.name}</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4 flex-1">{product.description}</p>
-        <span className="text-2xl font-bold text-black dark:text-zinc-50 mb-4">
-          {formatPrice(product.price)}
-        </span>
-        <div className="flex gap-2">
-          <Link
-            href={`/products/${product.id}`}
-            className="flex-1 bg-black dark:bg-zinc-50 text-white dark:text-black py-2 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition text-center"
-          >
-            View Details
-          </Link>
-          <AddToCartButton productId={product.id} variant="compact" />
+    <article>
+      <Link href={`/products/${product.id}`} className="group block">
+        <div className="relative aspect-[4/5] overflow-hidden bg-line">
+          <Image
+            src={product.image_url}
+            alt=""
+            fill
+            priority={priority}
+            sizes="(min-width: 1024px) 33vw, 50vw"
+            className="object-cover"
+          />
         </div>
-      </div>
-    </div>
+        <Heading className="mt-4 text-xl leading-snug text-ink group-hover:underline group-hover:underline-offset-4 md:text-2xl">
+          {product.name}
+        </Heading>
+        {sizes && <p className="mt-1 text-sm text-muted">{sizes}</p>}
+        <p className="mt-2 text-ink">
+          <span className="text-sm text-muted">nuo </span>
+          <span className="text-lg font-medium">{formatPrice(startingPrice(product))}</span>
+        </p>
+      </Link>
+    </article>
   );
 }

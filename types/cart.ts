@@ -1,8 +1,12 @@
-import type { Product } from './product';
-
 export interface CartItem {
   id: string;
-  product_id: string;
+  variant_id: string;
   quantity: number;
-  products: Product;
+  product_variants: {
+    id: string;
+    label: string;
+    weight_g: number;
+    price: number;
+    products: { id: string; name: string; image_url: string };
+  };
 }

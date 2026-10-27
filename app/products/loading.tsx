@@ -1,20 +1,16 @@
 export default function ProductsLoading() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black py-12 px-4 pt-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="h-9 w-40 bg-zinc-200 dark:bg-zinc-800 rounded mb-8 animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" aria-busy="true">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-zinc-900 rounded-lg shadow-md overflow-hidden animate-pulse">
-              <div className="h-48 bg-zinc-200 dark:bg-zinc-800" />
-              <div className="p-6 space-y-3">
-                <div className="h-5 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded" />
-                <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 rounded" />
-                <div className="h-8 w-1/3 bg-zinc-200 dark:bg-zinc-800 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14" aria-busy="true" aria-label="Kraunama">
+      <div className="h-12 w-56 bg-line" />
+      <div className="mt-3 h-5 w-80 max-w-full bg-line/60" />
+      <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i}>
+            <div className="aspect-[4/5] bg-line" />
+            <div className="mt-4 h-6 w-3/4 bg-line/60" />
+            <div className="mt-2 h-4 w-1/3 bg-line/60" />
+          </div>
+        ))}
       </div>
     </div>
   );
