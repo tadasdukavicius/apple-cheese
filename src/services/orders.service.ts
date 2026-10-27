@@ -6,7 +6,7 @@ import { fromDbError } from '../utils/dbError.js';
 import type { CreateOrderInput } from '../schemas/index.js';
 import type { Order } from '../types/index.js';
 
-const ORDER_SELECT = '*, order_items (id, product_id, quantity, price_at_purchase, products (id, name, image_url))';
+const ORDER_SELECT = '*, order_items (id, product_name, variant_label, image_url, quantity, price_at_purchase)';
 
 /**
  * Creates the order, its items and clears the cart in a single transaction
@@ -51,14 +51,14 @@ export const getOrder = async (id: string, userId: string, token: string) => {
 /** Charges the order through the payment provider, then records it as paid. */
 export const payOrder = async (id: string, userId: string, token: string) => {
   const order = await getOrder(id, userId, token);
-  if (order.status !== 'pending') throw AppError.badRequest('Order is not awaiting payment');
+  if (order.status !== 'pending') throw AppError.badRequest('ORDER_NOT_PAYABLE', 'Užsakymas nelaukia apmokėjimo');
 
   const result = await paymentProvider.charge({
     orderId: order.id,
     amount: Number(order.total_price),
     currency: PRICING.currency,
   });
-  if (!result.success) throw new AppError(402, `Payment failed: ${result.reason}`);
+  if (!result.success) throw new AppError(402, 'PAYMENT_FAILED', `Apmokėjimas nepavyko: ${result.reason}`);
 
   const { data, error } = await createUserClient(token).rpc('mark_order_paid', {
     p_order_id: id,

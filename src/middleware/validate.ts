@@ -13,7 +13,7 @@ export const validate =
         field: i.path.join('.'),
         message: i.message,
       }));
-      return next(AppError.badRequest('Validation failed', details));
+      return next(AppError.badRequest('VALIDATION_FAILED', 'Neteisingi duomenys', details));
     }
     if (source === 'body') req.body = result.data;
     // Express 5 exposes req.query as a getter, so parsed values go to res.locals
