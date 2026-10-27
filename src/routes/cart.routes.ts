@@ -8,7 +8,7 @@ import {
 import { validate } from '../middleware/validate.js';
 import {
   addToCartSchema,
-  productIdParamSchema,
+  variantIdParamSchema,
   updateCartItemSchema,
 } from '../schemas/index.js';
 
@@ -17,14 +17,14 @@ const router = Router();
 router.get('/', getCartHandler);
 router.post('/', validate(addToCartSchema), addToCartHandler);
 router.patch(
-  '/:productId',
-  validate(productIdParamSchema, 'params'),
+  '/:variantId',
+  validate(variantIdParamSchema, 'params'),
   validate(updateCartItemSchema),
   updateCartItemHandler
 );
 router.delete(
-  '/:productId',
-  validate(productIdParamSchema, 'params'),
+  '/:variantId',
+  validate(variantIdParamSchema, 'params'),
   removeFromCartHandler
 );
 

@@ -14,24 +14,24 @@ export const getCartHandler = async (req: Request, res: Response) => {
 };
 
 export const addToCartHandler = async (req: Request, res: Response) => {
-  const { productId, quantity } = req.body as AddToCartInput;
-  res.status(201).json(await addToCart(productId, quantity, req.user!.token));
+  const { variantId, quantity } = req.body as AddToCartInput;
+  res.status(201).json(await addToCart(variantId, quantity, req.user!.token));
 };
 
 export const updateCartItemHandler = async (
-  req: Request<{ productId: string }>,
+  req: Request<{ variantId: string }>,
   res: Response
 ) => {
   const { id, token } = req.user!;
   const { quantity } = req.body as { quantity: number };
-  res.json(await updateCartItemQuantity(id, req.params.productId, quantity, token));
+  res.json(await updateCartItemQuantity(id, req.params.variantId, quantity, token));
 };
 
 export const removeFromCartHandler = async (
-  req: Request<{ productId: string }>,
+  req: Request<{ variantId: string }>,
   res: Response
 ) => {
   const { id, token } = req.user!;
-  await removeFromCart(id, req.params.productId, token);
+  await removeFromCart(id, req.params.variantId, token);
   res.status(204).send();
 };

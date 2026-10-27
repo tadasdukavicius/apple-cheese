@@ -5,7 +5,7 @@ import type { CartItem } from '../types/index.js';
 export const getCart = async (userId: string, token: string) => {
   const { data, error } = await createUserClient(token)
     .from('cart_items')
-    .select('*, products (*)')
+    .select('*, product_variants (*, products (id, name, image_url))')
     .eq('user_id', userId)
     .order('created_at', { ascending: true });
 
@@ -14,9 +14,9 @@ export const getCart = async (userId: string, token: string) => {
 };
 
 /** Adds to the existing quantity atomically (see add_to_cart in supabase/schema.sql). */
-export const addToCart = async (productId: string, quantity: number, token: string) => {
+export const addToCart = async (variantId: string, quantity: number, token: string) => {
   const { data, error } = await createUserClient(token).rpc('add_to_cart', {
-    p_product_id: productId,
+    p_variant_id: variantId,
     p_quantity: quantity,
   });
 
@@ -26,7 +26,7 @@ export const addToCart = async (productId: string, quantity: number, token: stri
 
 export const updateCartItemQuantity = async (
   userId: string,
-  productId: string,
+  variantId: string,
   quantity: number,
   token: string
 ): Promise<CartItem> => {
@@ -34,7 +34,7 @@ export const updateCartItemQuantity = async (
     .from('cart_items')
     .update({ quantity })
     .eq('user_id', userId)
-    .eq('product_id', productId)
+    .eq('variant_id', variantId)
     .select()
     .single();
 
@@ -44,14 +44,14 @@ export const updateCartItemQuantity = async (
 
 export const removeFromCart = async (
   userId: string,
-  productId: string,
+  variantId: string,
   token: string
 ): Promise<void> => {
   const { error } = await createUserClient(token)
     .from('cart_items')
     .delete()
     .eq('user_id', userId)
-    .eq('product_id', productId);
+    .eq('variant_id', variantId);
 
   if (error) throw fromDbError(error);
 };
