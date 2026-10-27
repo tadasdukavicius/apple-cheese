@@ -1,18 +1,27 @@
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  label: string;
+  weight_g: number;
+  price: number;
+  sort_order: number;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
   image_url: string;
-  category: 'apples' | 'cheese' | 'gifts' | 'other';
+  category: 'singles' | 'gift_sets';
   features: string[];
   created_at: string;
+  variants: ProductVariant[];
 }
 
 export interface CartItem {
   id: string;
   user_id: string;
-  product_id: string;
+  variant_id: string;
   quantity: number;
   created_at: string;
 }

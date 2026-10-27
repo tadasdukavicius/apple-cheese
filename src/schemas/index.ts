@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export const idParamSchema = z.object({ id: z.string().uuid() });
-export const productIdParamSchema = z.object({ productId: z.string().uuid() });
+export const variantIdParamSchema = z.object({ variantId: z.string().uuid() });
 
 export const addToCartSchema = z.object({
-  productId: z.string().uuid(),
+  variantId: z.string().uuid(),
   quantity: z.number().int().min(1).max(99).default(1),
 });
 
@@ -13,18 +13,28 @@ export const updateCartItemSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
-  phone: z.string().trim().regex(/^\+?[0-9 ()-]{6,20}$/, 'Invalid phone number'),
+  phone: z.string().trim().regex(/^\+?[0-9 ()-]{6,20}$/, 'Neteisingas telefono numeris'),
   shippingAddress: z.object({
     street: z.string().trim().min(1).max(120),
     houseNumber: z.string().trim().min(1).max(20),
     flat: z.string().trim().max(20).optional(),
     city: z.string().trim().min(1).max(80),
     postalCode: z.string().trim().min(3).max(12),
-    country: z.literal('Lithuania'),
+    country: z.literal('Lietuva'),
   }),
 });
 
-export const CATEGORIES = ['apples', 'cheese', 'gifts', 'other'] as const;
+export const contactSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email().max(200),
+  subject: z.string().trim().min(2).max(120),
+  message: z.string().trim().min(10).max(2000),
+  website: z.string().optional(),
+});
+
+export type ContactInput = z.infer<typeof contactSchema>;
+
+export const CATEGORIES = ['singles', 'gift_sets'] as const;
 
 export const productQuerySchema = z.object({
   q: z.string().trim().max(60).optional(),
