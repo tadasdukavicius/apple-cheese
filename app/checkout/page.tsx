@@ -78,7 +78,7 @@ export default function CheckoutPage() {
               <section className="card p-6">
                 <h2 className="text-xl font-medium text-ink mb-6">Kontaktai</h2>
                 <Field id="checkout-email" label="El. paštas">
-                  {(p) => <input {...p} type="email" value={user?.email ?? ''} readOnly className={`${p.className} opacity-60 cursor-not-allowed`} />}
+                  {(p) => <input {...p} type="email" value={user?.email ?? ''} readOnly className={`${p.className} cursor-not-allowed bg-surface text-muted`} />}
                 </Field>
               </section>
 
@@ -86,7 +86,7 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-medium text-ink mb-6">Pristatymo adresas</h2>
                 <div className="space-y-6">
                   <Field id="country" label="Šalis">
-                    {(p) => <input {...p} type="text" value="Lietuva" readOnly className={`${p.className} opacity-60 cursor-not-allowed`} />}
+                    {(p) => <input {...p} type="text" value="Lietuva" readOnly className={`${p.className} cursor-not-allowed bg-surface text-muted`} />}
                   </Field>
                   <Field id="street" label="Gatvė" error={errors.street?.message}>
                     {(p) => <input {...p} type="text" autoComplete="address-line1" placeholder="Gatvės pavadinimas" {...register('street')} />}

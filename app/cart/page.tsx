@@ -61,7 +61,8 @@ export default function CartPage() {
                 const label = `${v.products.name} (${v.label})`;
                 return (
                   <li key={item.id} className="grid grid-cols-[5rem_1fr] gap-x-4 gap-y-3 border-b border-line py-5 sm:grid-cols-[6rem_1fr_auto]">
-                    <Link href={`/products/${v.products.id}`} className="relative row-span-2 aspect-square bg-line sm:row-span-1">
+                    {/* Decorative duplicate of the product-name link, so it is hidden from assistive tech and the tab order */}
+                    <Link href={`/products/${v.products.id}`} aria-hidden="true" tabIndex={-1} className="relative row-span-2 aspect-square bg-line sm:row-span-1">
                       <Image src={v.products.image_url} alt="" fill sizes="96px" className="object-cover" />
                     </Link>
 
