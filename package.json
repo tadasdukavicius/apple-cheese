@@ -1,0 +1,10 @@
+{
+  "name": "apple-cheese",
+  "private": true,
+  "description": "Obuolių sūris: Lithuanian apple cheese shop (Next.js storefront + Express API)",
+  "scripts": {
+    "install:all": "npm --prefix api ci && npm --prefix web ci",
+    "dev": "npx --yes concurrently -n api,web -c yellow,green \"npm --prefix api run dev\" \"npm --prefix web run dev\"",
+    "test": "npm --prefix api test && npm --prefix web test"
+  }
+}
