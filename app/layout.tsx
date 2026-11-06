@@ -8,6 +8,7 @@ import { AuthProvider } from "../context/AuthContext";
 import { CartProvider } from "../context/CartContext";
 import { ToastProvider } from "../context/ToastContext";
 import { SITE_DESCRIPTION, SITE_NAME } from "../lib/site";
+import { SITE_URL } from "../lib/config";
 
 // latin-ext is required for Lithuanian letters (ą č ę ė į š ų ū ž)
 const geistSans = Geist({
@@ -20,10 +21,10 @@ const newsreader = Newsreader({
   subsets: ["latin", "latin-ext"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   openGraph: {
