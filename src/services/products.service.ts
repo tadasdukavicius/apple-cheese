@@ -18,8 +18,8 @@ export const getAllProducts = async (query: ProductQuery): Promise<Product[]> =>
 
   if (query.category) builder = builder.eq('category', query.category);
   if (query.q) {
-    // Strip characters that have meaning in PostgREST filter syntax / LIKE patterns
-    const term = query.q.replace(/[%_,()*\\]/g, ' ').trim();
+    // Replace characters that have meaning in PostgREST filter syntax / LIKE patterns (and collapse whitespace)
+    const term = query.q.replace(/[%_,()*\\\s]+/g, ' ').trim();
     if (term) builder = builder.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
   }
 
