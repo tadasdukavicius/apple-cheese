@@ -1,4 +1,4 @@
--- Apple & Cheese schema. Run in the Supabase SQL editor (or via the Supabase CLI), then run seed.sql.
+-- Obuolių sūris schema. Run in the Supabase SQL editor, or apply with the Supabase CLI (`supabase db reset`), then run seed.sql.
 -- Upgrading from an older version? Run reset.sql first (it deletes all shop data).
 
 create extension if not exists pgcrypto;

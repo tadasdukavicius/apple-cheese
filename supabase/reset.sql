@@ -1,4 +1,4 @@
--- DESTRUCTIVE: removes every shop table and function so schema.sql can be run from scratch.
+-- DESTRUCTIVE: removes every shop table and function so the migration can be run from scratch.
 -- Use this when upgrading from an older schema. Auth users are not affected.
 
 drop function if exists public.add_to_cart(uuid, integer);
