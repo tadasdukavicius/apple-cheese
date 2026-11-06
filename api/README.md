@@ -2,11 +2,11 @@
 
 Express + TypeScript REST API for an online shop selling **obuolių sūris** ("apple cheese"), a traditional Lithuanian confection of slow-cooked apples pressed into a block, in flavours such as classic, chilli, nuts, honey and cinnamon. Data and authentication are provided by Supabase (Postgres + Auth).
 
-This repository is the **backend**. The Next.js storefront lives in [`apple-cheese`](https://github.com/tadasdukavicius/apple-cheese).
+This folder is the **backend**. The Next.js storefront lives next to it in [`../web`](../web).
 
 > **This is a portfolio project.** Payment is simulated and no orders are fulfilled.
 
-[![CI](https://github.com/tadasdukavicius/apple-cheese-express/actions/workflows/ci.yml/badge.svg)](https://github.com/tadasdukavicius/apple-cheese-express/actions/workflows/ci.yml)
+[![CI](https://github.com/tadasdukavicius/apple-cheese/actions/workflows/api.yml/badge.svg)](https://github.com/tadasdukavicius/apple-cheese/actions/workflows/api.yml)
 
 
 ## Features
@@ -107,7 +107,7 @@ To check that the tests can fail, deliberately broken copies of the schema were 
 
 ## Continuous integration
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request: type-check, tests and build; the SQL tests against a Postgres service container; and `npm audit` for production dependencies. Dependabot proposes updates weekly.
+[`.github/workflows/api.yml`](../.github/workflows/api.yml) runs on every push and pull request: type-check, tests and build; the SQL tests against a Postgres service container; and `npm audit` for production dependencies. Dependabot proposes updates weekly.
 
 ## Endpoints
 
@@ -160,7 +160,6 @@ supabase/
   tests/              SQL tests and the Supabase stubs they need
 tests/                Vitest API and unit tests
 scripts/              SQL test runner scripts
-.github/              CI workflow and Dependabot configuration
 ```
 
 ## Design notes
