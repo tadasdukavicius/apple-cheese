@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8008/api/';
+import { API_BASE_URL } from './config';
 
 export class ApiError extends Error {
   constructor(
@@ -22,7 +22,7 @@ async function request<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}${endpoint}`, {
+    res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),

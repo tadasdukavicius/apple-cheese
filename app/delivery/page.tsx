@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: "Pristatymo kaina, terminai ir grąžinimo sąlygos.",
 };
 
+// The shipping price comes from the API, so refresh it periodically instead of freezing it at build time
+export const revalidate = 3600;
+
 export default async function DeliveryPage() {
   const pricing = await getPricing();
 
